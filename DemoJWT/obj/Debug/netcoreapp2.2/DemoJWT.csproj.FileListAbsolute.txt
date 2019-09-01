@@ -1,0 +1,16 @@
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\bin\Debug\netcoreapp2.2\DemoJWT.deps.json
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\bin\Debug\netcoreapp2.2\DemoJWT.runtimeconfig.json
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\bin\Debug\netcoreapp2.2\DemoJWT.runtimeconfig.dev.json
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\bin\Debug\netcoreapp2.2\DemoJWT.dll
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.csprojAssemblyReference.cache
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.csproj.CoreCompileInputs.cache
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.RazorAssemblyInfo.cache
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.RazorAssemblyInfo.cs
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.AssemblyInfoInputs.cache
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.AssemblyInfo.cs
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.RazorTargetAssemblyInfo.cache
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\bin\Debug\netcoreapp2.2\DemoJWT.pdb
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.dll
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\obj\Debug\netcoreapp2.2\DemoJWT.pdb
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\bin\Debug\netcoreapp2.2\appsettings.Development.json
+C:\Users\jose_\source\repos\DemoJWT\DemoJWT\bin\Debug\netcoreapp2.2\appsettings.json
