@@ -20,18 +20,20 @@ namespace DemoJWT.Controllers
         private readonly SignInManager<Usuario> _signInManager;
         private readonly IMapper _mapper;
         private readonly UserManager<Usuario> _userManager;
+        private readonly RoleManager<Rol> _roleManager;
 
-        HttpClient cliente = new HttpClient();
 
         public AuthenticationController(IAuthenticateService authService,
                                         UserManager<Usuario> userManager,
                                         SignInManager<Usuario> signInManager,
+                                        RoleManager<Rol> roleManager,
                                         IMapper mapper)
         {
             _authService = authService;
             _userManager = userManager;
             _signInManager = signInManager;
             _mapper = mapper;
+            _roleManager = roleManager;
         }
 
         [Route("Login")]
@@ -88,6 +90,101 @@ namespace DemoJWT.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
 
                 return StatusCode(201, "User Created");
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [Route("CreateRol")]
+        [HttpPost]
+        public async Task<IActionResult> CreateRol([FromBody] RolesRegisterDTO model)
+        {
+            try
+            {
+                var role = await _roleManager.FindByIdAsync(model.Id.ToString());
+
+                if (role == null) { return StatusCode(404, "Rol Does not exist"); }
+
+                role = new Rol { Name = model.Name };
+
+                var result = await _roleManager.CreateAsync(role);
+
+                if (result.Succeeded)
+                {
+                    return StatusCode(201, "Rol Created");
+                }
+                return StatusCode(400, "This rol cannot be created!");
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [Route("AddRolToUser")]
+        [HttpPost]
+        public async Task<IActionResult> AddRolToUser([FromBody] RolManagementDTO model)
+        {
+            try
+            {
+                var role = await _roleManager.FindByIdAsync(model.RolId.ToString());
+
+                if (role == null) { return StatusCode(404, "Rol Does not exist"); }
+
+                var user = await _userManager.FindByIdAsync(model.UserId.ToString());
+
+                if (user == null) { return StatusCode(404, "User does not exist."); }
+
+                if (await _userManager.IsInRoleAsync(user, role.Name))
+                {
+                    return StatusCode(400, String.Format("User: {0} is already in this role", user));
+                }
+
+                var result = await _userManager.AddToRoleAsync(user, role.Name);
+
+                if (!result.Succeeded)
+                {
+                    return StatusCode(400, String.Format("User: {0} could not be added to role", user));
+                }
+
+                return StatusCode(204, "User Enrolled");
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+
+        }
+
+        [Route("RemoveRolFromUser")]
+        [HttpPost]
+        public async Task<IActionResult> RemoveRolFromUser([FromBody] RolManagementDTO model)
+        {
+            try
+            {
+                var role = await _roleManager.FindByIdAsync(model.RolId.ToString());
+
+                if (role == null) { return StatusCode(404, "Rol Does not exist"); }
+
+                var user = await _userManager.FindByIdAsync(model.UserId.ToString());
+
+                if (user == null) { return StatusCode(404, "User does not exist."); }
+
+                if (!await _userManager.IsInRoleAsync(user, role.Name))
+                {
+                    return StatusCode(400, String.Format("User: {0} does not belong to this role", user));
+                }
+
+                var result = await _userManager.RemoveFromRoleAsync(user, role.Name);
+
+                if (!result.Succeeded)
+                {
+                    return StatusCode(400, String.Format("User: {0} could not be removed from this role", user));
+                }
+
+                return StatusCode(204, "User Removed");
             }
             catch (Exception e)
             {
