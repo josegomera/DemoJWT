@@ -1,4 +1,5 @@
-﻿using DemoJWT.DTO;
+﻿using AutoMapper;
+using DemoJWT.DTO;
 using DemoJWT.Entities;
 using DemoJWT.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -17,48 +18,56 @@ namespace DemoJWT.Controllers
     {
         private readonly IAuthenticateService _authService;
         private readonly SignInManager<Usuario> _signInManager;
+        private readonly IMapper _mapper;
         private readonly UserManager<Usuario> _userManager;
 
         HttpClient cliente = new HttpClient();
 
         public AuthenticationController(IAuthenticateService authService,
                                         UserManager<Usuario> userManager,
-                                        SignInManager<Usuario> signInManager)
+                                        SignInManager<Usuario> signInManager,
+                                        IMapper mapper)
         {
             _authService = authService;
             _userManager = userManager;
             _signInManager = signInManager;
+            _mapper = mapper;
         }
 
         [Route("Login")]
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] UserDTO model)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, false, false);
-
-            if (result.Succeeded)
+            try
             {
-                var user = await _userManager.FindByNameAsync(model.UserName);
+                var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, false, false);
 
-                string Token;
-                if (_authService.IsAuthenticated(user, out Token))
+                if (result.Succeeded)
                 {
+                    var user = await _userManager.FindByNameAsync(model.UserName);
+
+                    if (user == null) { BadRequest("User does not exist."); }
+
+                    var Token = await _authService.IsAuthenticated(user);
 
                     HttpContext.Session.SetString("Token", Token);
 
-                    cliente.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer",
-                    HttpContext.Session.GetString("Token"));
+                    HttpContext.Response.Headers.Add("Authorization", Token);
 
-                    return Ok(new { token = Token });
+                    return StatusCode(200, "Login Successfully");
+
                 }
+                return StatusCode(400, "Error, Check your email and password");
             }
-            return BadRequest();
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
 
         [Route("Logout")]
         [HttpPost]
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
         {
             HttpContext.Session.Remove("Token");
             return Ok("Succesfully LogOut");
@@ -72,24 +81,17 @@ namespace DemoJWT.Controllers
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
 
-                if (user != null) { BadRequest("This user already exist"); }
+                if (user != null) { return StatusCode(400, "This user already exist"); }
 
-                user = new Usuario
-                {
-                    UserName = model.Username,
-                    Email = model.Email,
-                    Nombre = model.Nombre,
-                    Apellido = model.Apellido,
-                    Cedula = model.Cedula
-                };
+                user = _mapper.Map<Usuario>(model);
 
                 var result = await _userManager.CreateAsync(user, model.Password);
 
-                return StatusCode(201);
+                return StatusCode(201, "User Created");
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -97,58 +99,50 @@ namespace DemoJWT.Controllers
         [HttpPost]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO model)
         {
-            if (ModelState.IsValid)
+            try
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
 
-                if (user != null)
-                {
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    var resultUrl = Url.Action("Resetpassword", "Authentication",
-                        new { token = token, email = user.Email }, Request.Scheme);
+                if (user == null) { return StatusCode(404, "User not found"); }
 
-                    System.IO.File.WriteAllText("resetlink", resultUrl);
-                }
-                else
-                {
-                    BadRequest("No encontramos tu correo en la base de datos");
-                }
-                return Ok();
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                HttpContext.Response.Headers.Add("PasswordResetToken", token);
+
+                return StatusCode(204, "Token Generated");
             }
-            return BadRequest(ModelState);
-        }
-
-        [HttpGet]
-        public IActionResult Resetpassword(string token, string email)
-        {
-            return Ok(new ResetPasswordDTO { Token = token, Email = email });
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
 
         [Route("Resetpassword")]
         [HttpPost]
-        public async Task<IActionResult> Resetpassword(ResetPasswordDTO model)
+        public async Task<IActionResult> Resetpassword([FromBody]  ResetPasswordDTO model)
         {
-            if (ModelState.IsValid)
+            try
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
 
-                if (user != null)
-                {
-                    var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Email);
+                if (user == null) { return StatusCode(404, "User not found"); }
 
-                    if (!result.Succeeded)
+                var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Email);
+
+                if (!result.Succeeded)
+                {
+                    foreach (var item in result.Errors)
                     {
-                        foreach (var item in result.Errors)
-                        {
-                            ModelState.AddModelError("", item.Description);
-                        }
-                        return BadRequest(ModelState);
+                        ModelState.AddModelError("", item.Description);
                     }
-                    return Ok();
+                    return StatusCode(400, ModelState);
                 }
-                return BadRequest(ModelState);
+                return StatusCode(204, "Password Changed");
             }
-            return BadRequest(ModelState);
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
     }
 }
